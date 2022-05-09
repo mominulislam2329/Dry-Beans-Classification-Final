@@ -1,0 +1,802 @@
+---
+title: "STAT 602 Final Project"
+author: "Group 3"
+date: "5/1/2022"
+output:
+  html_document: default
+  pdf_document: default
+---
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T)
+```
+
+# Dry Beans Final Project (STAT 602 2022)
+
+Please note that this is a modification of last years final project that is targeted towards the Spring 2022 class.
+
+Additionally, there was not a complete answer last year.
+
+By starting you all off with a related midterm project, it is my hope that you all will have more success with the problem this year.
+
+## Instructions
+
+*This project is intended to give you practice of doing predictions and inference - these tasks are sometimes referred to as "semi-supervised learning" problems.*
+
+
+You with your group (of about three members) are expected to
+
+* prepare a 30-45 minute presentation on the problem background
+* explain the model building process
+* provide your recommendations
+* Provide a short white paper of your model building process, the selected model, and the model's properties.  
+* Include annotated code that replicates your analysis.  
+* **MAKE SURE YOU PROPERLY REFERENCE ANY MATERIAL YOU USE IN THIS EXAM-this is an easy way to fail the final and course!!**
+
+
+*You and your group will present a 30-45 minute presentation over zoom to a committee who will then decide if you and your group will receive a passing grade.*
+
+**Due Date:** You and your group will select a time slot to give a presentation to the committee - please make sure to schedule around all of your group members exams. The white paper, presentation slides, and code files are all due the evening before the Zoom presentation.
+
+> If you need additional time, or have any other concerns, please let me know sooner than later so that we can make alternative arrangements.
+
+
+
+
+## Background (Same as the midterm.)
+
+In a recent paper, Koklu et al. explored the possibility of using morphometric measurements on seven commonly cultivated white beans to develop an automated (or at least machine assisted) method for separating the white beans when presented at market. 
+
+> Using certified dry bean seeds in Turkey is around 10% (Bolat et al., 2017). Dry bean cultivation in Turkey and Asian countries usually in the form of populations containing mixed species of seeds. Also, there is not much certified seed planting area (Varankaya and Ceyhan, 2012). Since different populations which contain different genotypes are cultivated, the final products contain different species of seeds. Thus, when the dry bean seeds obtained from population cultivation are released to the market without being separated by species, the market value decreases immensely (Varankaya and Ceyhan, 2012). -Murat Koklu, Ilker Ali Ozkan, Multiclass classification of dry beans using computer vision and machine learning techniques, Computers and Electronics in Agriculture, Volume 174, 2020,
+
+### Updated tasks (Read carefully this is different than the Midterm!!)
+
+For the final project you have a slightly different task. You are expected to develop an automated method that predicts the value of a harvest from a 'population cultivation' from a single farm that has been presented at market.
+
+> You should consider additional methods for classification than you considered in your Midterm.  In particular,  it maybe possible to develop an accurate model using just one or two of the features that is transformed with a B-spline or polynomial... or even some other transform.  This is commonly refered to as feature engineering and for the EE/CS students (in particular) in the class this is a major issue to consider when building models.
+
+To do this you will be given a single pound of white beans from the harvest for which you will be expected to predict the net worth of said beans- any additional information (such as the number of each variety of white bean present in the cultivation) you can provide will be much appreciated.  You will be expected to provide some measure of the confidence or uncertainty in your estimate of the value of a pound of beans.
+  
+## Data Resources and Structure (Same as the Midterm)
+
+For this project you will be given a training sample of beans that are classified into 6 varieties of white beans at a hypothetical (ie. made up by me!) local market price per lb in USD.
+
+1. Bombay   ($5.56/lb)
+2. Cali     ($6.02/lb)
+3. Dermason ($1.98/lb)
+4. Horoz    ($2.43/lb)
+5. Seker    ($2.72/lb)
+6. Sira     ($5.40/lb)
+
+Seed weight in grams (average gram per seed)
+
++ Seker       0.49 grams/seed
++ Bombay      1.92 grams/seed
++ Cali        0.61 grams/seed
++ Horoz       0.52 grams/seed
++ Sira        0.38 grams/seed
++ Dermason    0.28 grams/seed
+
+(Note that there are ~453.592 grams per pound)
+
+In the paper by Koklu and Ozkan there is a seventh variety (Barbunya) that we are ignoring for this task. 
+
+The column Labels of the training data are as follows. Please see the provided papers for additional details.
+
+
+1. Area: Area ($A$): The area of a bean zone and the number of pixels within its boundaries.
+$$A=//sum_{r,c //in R} 1,$$
+where $r$, $c$ is the size of the bean region.
+2. Perimeter ($P$): Bean circumference is defined as the length of its border.	
+3. MajorAxisLength (Major axis length ($L$)): The distance between the ends of the longest line that can be drawn from a bean.	
+4. MinorAxisLength (Minor axis length ($l$)): The longest line that can be drawn from the bean while standing perpendicular to the main axis.	
+6. Eccentricity ($Ec$): Eccentricity of the ellipse having the same moments as the region.	
+7. ConvexArea	(Convex Area ($C$)): Number of pixels in the smallest convex polygon that can contain the area of a bean seed.
+9. Extent ($Ex$): The ratio of the pixels in the bounding box to the bean area.
+$$ Ex=//frac{A}{A_b},$$
+where $A_b$ is the Area of a bounding rectangle. 
+10. Class: One of the six bean types/varieties (BOMBAY, CALI, DERMASON, HOROZ, SEKER, SIRA)
+
+## Data Sets (There are additional Data Sets here)
+
+You will be provided with the following files: 
+
+1. `samp.A.csv`: Sample of 1 pound of unlabeled beans from cultivation site A.
+2. `samp.B.csv`: Sample of 1 pound of unlabeled beans from cultivation site B.
+3. `samp.C.csv`: Sample of 1 pound of unlabeled beans from cultivation site C.
+4. `labeled.csv`: Labeled training data to build the classifiers for the task.
+
+*Please note that the labeled data has a equal number of each type of beans and there is NO REASON TO EXPECT THAT THE THREE DIFFERENT CULTIVATIONS HAVE THIS PROPERTY.*
+
+
+
+## Grading
+	
+> Your group's grade (using standard grading scales) and will be determined by the following components:
+	
+1. Your group presentation over Zoom. All members of the group are responsible for being able to discuss all aspects of the presentation, code, and paper.
+
+2. The white paper, with the methods you have used in building your classifiers.
+
+    i) You should use multiple classification methods and document how you constructed them.
+		 
+    ii) YOU NEED TO PROVIDE AN ESTIMATE OF THE ACCURACY OF THE PREDICTED VALUE OF A POUND OF BEANS FOR EACH SAMPLE IN YOUR WRITE UP AND PRESENTATION!
+		
+3. In your presentation and white paper, you will need to provide an estimate of the accuracy of the classifier you build when applied to the each of the 3 cultivation samples. This should also include the accuracy of the 3 lbs of beans. (Please make sure that you explain how you arrived at your predictions.)
+
+4. Your knowledge of the material in Stat 601, Stat 602, and the methods used in constructing your classifiers as demonstrated by the white paper component and Zoom presentation of the project.
+	
+You will need to turn in the following three components (**Parts 1, 2, and 3 the evening before your presentation to the committee**): 
+	
+* An annotated R-script that build your classifier off of `labeled.csv`. 
+* A write-up on the construction on your classifier. (White paper approx. Max of 2 pages of written text. Tables and plots do not count towards the total page count but put tables/figures at the end of the write up and reference forward to them.)
+* A Powerpoint presentation discussing the work you have done on the project. (Including the following: Introduce and review the problem; discuss the resources you have used to solve the problem; present the algorithms you used to solve the problem; and your solutions/predictions with their corresponding accuracy.)
+	
+  
+	
+> Do ask me (or the GTAs) for help if you are having trouble.   
+
+> Beware this is a rather open ended question.
+
+> Start early. Get something that works then come back and build up a better solution.
+	
+	
+Good Luck
+	
+-cps
+	
+
+
+
+
+# Loading Library
+
+```{r, echo=FALSE, warning=FALSE}
+library(ggplot2)
+library(gridExtra)
+library(corrplot)
+library(leaps)
+library(kableExtra)
+library(class)
+library(MASS)
+library(e1071)
+library(cvms)
+library(caret)
+library(dplyr)
+library(reshape)
+library(reshape2)
+library(maditr)
+library(knitr)
+library(GGally)
+library(tidyverse)
+library(readr)
+library(readxl)
+library(patchwork)
+library(ggeasy)
+library(ggpubr)
+library(rstatix)
+library(lemon)
+```
+
+# Loading Data
+
+```{r, warning=FALSE}
+
+# Loading Data and skipping Index Column
+BeanData <- read.csv('labeled.csv', header=TRUE, sep=",",)[,2:9]
+cultivation_A_df = read.csv('samp.A.csv', header=TRUE, sep=",",)[,2:8]
+cultivation_B_df = read.csv('samp.B.csv', header=TRUE, sep=",",)[,2:8]
+cultivation_C_df = read.csv('samp.C.csv', header=TRUE, sep=",",)[,2:8]
+# Convert Class column into factor column
+BeanData$Class <- as.factor(BeanData$Class)
+
+# combine cultivations into a single dataframe with an indicator column
+cultivation_A_df['Cultivation'] = 'A'
+cultivation_B_df['Cultivation'] = 'B'
+cultivation_C_df['Cultivation'] = 'C'
+cultivation_df = rbind(cultivation_A_df, cultivation_B_df, cultivation_C_df)
+
+#EDA Dataset
+bean.dat <- BeanData
+
+```
+
+```{r}
+#setwd("/Users/mominul/Library/CloudStorage/OneDrive-SouthDakotaStateUniversity-SDSU/STAT 602/Final Project/Final Project_Complied")
+
+
+labeled.data <- read.csv("labeled.csv", header = T)[, -1] ##Importing labeled data set and removing first column as this is just the row number 
+sample.A <- read.csv("samp.A.csv", header = T)[, -1] ##Importing sample A data set and removing first column as this is just the row number
+sample.B <- read.csv("samp.B.csv", header = T)[, -1] ##Importing sample B data set and removing first column as this is just the row number
+sample.C <- read.csv("samp.C.csv", header = T)[, -1] ##Importing sample C data set and removing first column as this is just the row number
+
+labeled.data$Class <- as.factor(labeled.data$Class) ##Converting Class variable to a factor
+```
+
+## Summary Statistics
+
+
+```{r}
+##Summary Statistics of our data set
+summary.stats <- round(as.data.frame((bean.dat[,-8])%>% #we ignore the categorical feature 'class'
+                                       psych::describe())%>%
+                         dplyr::select(n,mean, sd, median, min, max,range), 2)
+#write.csv (summary.stats,'summary_stat_bn.csv') wrtite the data into a table 
+
+kable(summary.stats, 
+      caption="Statistical Distribution of Features of Dry Beans",
+      col.names = c("Count","Mean","Standard Deviation","Median","Minimum","Maximum","Range"))
+
+```
+
+```{r, include=FALSE}
+# Set Data Frame to assist in looking up of seed weight in grams and seed price per pound
+ReferenceData <- data.frame(as.factor(c("BOMBAY", "CALI", "DERMASON", "HOROZ", "SEKER", "SIRA")), c(5.56, 6.02, 1.98, 2.43, 2.72, 5.40), c(1.92, 0.61, 0.28, 0.52, 0.49, 0.38))
+names(ReferenceData) <- c("Class", "GramsPerSeed", "DollarPerPound")
+# Set Conversion between grams and pounds
+grams_per_pound <- 453.592
+```
+
+## Figure 2
+```{r, echo=FALSE}
+ReferenceData %>%
+  kbl(caption = "Local Market Price and Grams/Seed Reference by Bean Variety") %>%
+  kable_classic("striped", full_width = F, html_font = "Cambria") %>%
+  kable_styling(latex_options = "HOLD_position") %>%
+  add_footnote("~453.592 grams per pound", notation="alphabet" , threeparttable = TRUE)
+```
+```{r}
+# Transform features to better show in plots
+bean.dat['Log_Area'] = log(bean.dat['Area'])
+bean.dat['Log_ConvexArea'] = log(bean.dat['ConvexArea'])
+```
+
+
+
+## Exploratory Data Analysis
+
+```{r}
+# Extract plot legend only
+# Used "lemon" library to access "legend" object from ggplot using "g_legend" function.  Allows to plot
+# legend a single time in a grid figure.
+plot_legend <- g_legend(ggplot(bean.dat,aes(x=Log_Area,fill=Class))+geom_density(col=NA,alpha=0.40))
+plot(plot_legend)
+```
+
+
+```{r}
+#Density plot using ggplot tool for numeric variables
+dp.A<- ggplot(bean.dat,aes(x=Log_Area,fill=Class))+geom_density(col=NA,alpha=0.40)+theme(legend.position="none")
+dp.B<- ggplot(bean.dat,aes(x=Perimeter,fill=Class))+geom_density(col=NA,alpha=0.40)+theme(legend.position="none")
+dp.C<- ggplot(bean.dat, aes(x= MajorAxisLength, fill= Class))+ geom_density(col= NA, alpha= 0.40)+theme(legend.position="none")
+dp.D<- ggplot(bean.dat, aes(x=MinorAxisLength, fill= Class))+ geom_density(col= NA, alpha= 0.40)+theme(legend.position="none")
+dp.E<- ggplot(bean.dat, aes(x= Eccentricity, fill= Class))+ geom_density(col= NA, alpha= 0.40)+theme(legend.position="none")
+dp.F<- ggplot(bean.dat, aes(x= Log_ConvexArea, fill= Class))+ geom_density(col= NA, alpha= 0.40)+theme(legend.position="none")
+dp.G<- ggplot(bean.dat, aes(x= Extent, fill= Class))+ geom_density(col= NA, alpha= 0.40)+theme(legend.position="none")
+gridExtra::grid.arrange(dp.A, dp.B,dp.C,
+                        dp.D,dp.E,dp.F,
+                        dp.G, ncol=2)
+```
+
+```{r}
+#Histogram using base R for numeric variables
+num.bean <- bean.dat [,-8] #selecting numeric variables only
+####################Plotting Histogram for all Numeric Variables############
+plotHist <- function(columns,bin,colours){
+  par(mfrow = c(3,3))#Histogram plots to visualize the distribution of the numeric variables in the data set.
+  for (i in columns) {
+    hist(num.bean[,i], main = paste("Histogram of ", names(num.bean)[i]),
+         nclass = bin, las = 1, col = colours, 
+         xlab = paste(names(num.bean)[i]))
+  }
+}
+
+plotHist(c(1:7), bin = 60, "brown")
+
+
+
+```
+
+The histograms from the labeled data (Figure) reveal that the variables exhibit multimodal behavior. This indicates that at least one of the bean classes differs greatly from the others. Further investigation revealed that the kind of BOMBAY beans is to blame for the multimodality.
+
+
+
+```{r, echo=FALSE, message=FALSE}
+# visualize the correlation between explanatory variables
+# https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html
+corrplot(cor(as.matrix(BeanData[1:7])), method="number", order = "hclust", 
+         tl.col = "black", tl.srt = 45)
+```
+
+
+
+Most of the variables except for Eccentricity and Extent are highly correlated with each other. 
+
+## Boxplot by Beans Class
+
+
+```{r}
+# Box plot for Zone Area Based on Class of beans
+ggplot(bean.dat, aes(x=as.factor(Class), y=Log_Area, fill = as.factor(Class))) + geom_boxplot()+
+  labs(title="Log_Area vs Bean Class",x="Beans Class", y = "Log_Area")
+# Box plot for perimeter Based on Class of beans
+ggplot(bean.dat, aes(x=as.factor(Class), y=Perimeter, fill = as.factor(Class))) + geom_boxplot()+ labs(title="Circumference vs Bean Class",x="Beans Class", y = "Circumference")
+
+# Box plot for MajorAxisLength Based on Class of beans
+ggplot(bean.dat, aes(x=as.factor(Class), y=MajorAxisLength, fill = as.factor(Class))) + geom_boxplot()+ labs(title="Major Axis Length vs Bean Class",x="Beans Class", y = "Major Axis Length")
+
+# Box plot for MinorAxisLength Based on Class of beans
+ggplot(bean.dat, aes(x=as.factor(Class), y=MinorAxisLength, fill = as.factor(Class))) + geom_boxplot()+ labs(title="Minor Axis Length vs Bean Class",x="Beans Class", y = "Minor Axis Length")
+
+# Box plot for Eccentricity Based on Class of beans
+ggplot(bean.dat, aes(x=as.factor(Class), y=Eccentricity, fill =as.factor(Class))) + geom_boxplot()+ labs(title="Eccentricity vs Bean Class",x="Beans Class", y = "Eccentricity")
+
+# Box plot for ConvexArea Based on Class of beans
+ggplot(bean.dat, aes(x=as.factor(Class), y=  Log_ConvexArea, fill = as.factor(Class))) + geom_boxplot()+ labs(title="Log Convex Area vs Bean Class",x="Beans Class", y = "Log Convex Area")
+
+# Box plot for Extent Based on Class of beans
+ggplot(bean.dat, aes(x=as.factor(Class), y=Extent, fill = as.factor(Class))) + geom_boxplot()+ labs(title="Extent vs Bean Class",x="Beans Class", y = "Extent")
+
+```
+
+The three different boxplots show us that the length of each plot clearly differs. This is an indication of non-equal variances.
+
+```{r}
+# Get only legend
+plot_legend <- g_legend(ggplot(data=cultivation_df, aes_string(x=names(cultivation_df)[2], colour='Cultivation')) +
+  geom_density(position='identity'))
+plot(plot_legend$grobs[[1]])
+```
+
+
+
+```{r}
+histplot_list <- list()
+# loop through each predictor and store a density for each into the plot_list
+cultivation_df$Area_LogScaled <- log(cultivation_df$Area)
+cultivation_df$ConvexArea_LogScaled <- log(cultivation_df$ConvexArea)
+cultivation_plot_df <- cultivation_df[, c(9,2:5,10,7:8)]
+plot_with_legend <- 
+for(plot_num in c(1:7)) {
+  p <- ggplot(data=cultivation_plot_df, aes_string(x=names(cultivation_plot_df)[plot_num], colour='Cultivation')) +
+  geom_density(position='identity') +
+  ggtitle(paste('Cultivation', names(cultivation_plot_df)[plot_num], sep=' ')) + 
+  theme(plot.title = element_text(size=11), axis.title.x=element_blank(), legend.position="none")+ylab("Relative Frequency Density")
+  histplot_list[[plot_num]] <- p
+}
+
+# Display the first four plots in a single graphic
+grid.arrange(grobs=c(histplot_list[1], histplot_list[2], histplot_list[3]), nrow = 2, ncol=2)
+```
+
+## Model Builiding
+
+### Spliting Labeled Data in train and test
+
+```{r, include = FALSE}
+# Exploratory Analysis is complete, now set up method for training versus test data
+set.seed(123)
+rows.trn=sort(sample(1:3000, size = 2000, replace = F))
+trn.dat=BeanData[rows.trn,]
+tst.dat=BeanData[-rows.trn,]
+# Check that training data seems to have sufficient samples for each bean variety
+summary(trn.dat)
+```
+
+### Feature Selection based on Adjusted Squared R Value
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Use best subset selection with an adjusted R Squared measurement
+# Utilized Section 6.5 of "An Introduction to Statistical Learning with Applications in R Second Edition" by Gareth Jones, Daniela Witten, Trevor Hastie, Robert Tibshirani
+regfit.full <- regsubsets(Class~., data = trn.dat, nvmax = 7)
+reg.summary <- summary(regfit.full)
+best_subset_data <- as.data.frame(cbind(seq(1:7), reg.summary$adjr2))
+names(best_subset_data) <- c('Features', 'AdjRSquared')
+# Use GGplot to give graphical representation of features selected using regsubsets
+ggplot(data=best_subset_data, aes(x=Features, y=AdjRSquared)) +
+  geom_line(linetype="dashed")+geom_point(color="red")+scale_x_discrete(name ="Feature Count", 
+                    limits=seq(1:7))+ylab("Adjusted R Squared")+ggtitle('Best Subset Selection by Adjusted R Squared')+ylim(.512,.535)
+```
+
+```{r, echo=FALSE, message=FALSE}
+# print best subset of features for each model size
+regfit_df <- as.data.frame(summary(regfit.full, scale='adjr2')$which)
+regfit_df <- as.data.frame(cbind(FeatureCount=1:7, regfit_df))
+# https://cran.r-project.org/web/packages/kableExtra/vignettes/awesome_table_in_html.html
+names(regfit_df) <- c('Feature Count', '(Intercept)', 'Area', 'Perimeter', 'Major Axis Length', 'Minor Axis Length', 'Eccentricity', 'Convex Area', 'Extent')
+regfit_df %>%
+  kbl(caption = "Best Subsets Selection - Feature Inclusion by Feature Count") %>%
+  kable_classic("striped", full_width = T, html_font = "Cambria") %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+
+```{r,include=FALSE}
+# https://www.analyticsvidhya.com/blog/2015/08/learning-concept-knn-algorithms-programming/
+normalize <- function(x) {
+return ((x - min(x)) / (max(x) - min(x))) }
+
+trn.dat.norm <- as.data.frame(lapply(trn.dat[1:7], normalize))
+tst.dat.norm <- as.data.frame(lapply(tst.dat[1:7], normalize))
+
+# Chose k to be the square root of n = 3000, giving k = 55
+knn.pred <- knn(train=trn.dat.norm, test=tst.dat.norm, cl=trn.dat$Class, k = 55)
+```
+
+### LDA Model
+
+```{r, include=FALSE}
+# Fit LDA Model
+lda.fit <- lda(Class ~ Area + Eccentricity + Extent, data=trn.dat)
+lda.fit
+```
+
+```{r, include=FALSE}
+# Get training accuracy of LDA model
+lda.class <- predict(lda.fit,trn.dat)
+table(lda.class$class, trn.dat$Class)
+mean(lda.class$class == trn.dat$Class)
+```
+
+### QDA Model
+
+```{r, include=FALSE}
+# Fit a QDA model
+qda.fit <- qda(Class ~ Area + Eccentricity + Extent, data=trn.dat)
+qda.fit
+```
+
+```{r, include=FALSE}
+# Get training accuracy of QDA model
+qda.class <- predict(qda.fit,trn.dat)
+table(qda.class$class, trn.dat$Class)
+mean(qda.class$class == trn.dat$Class)
+```
+
+### Random Forest Model
+
+```{r, warning = FALSE}
+# Random Forest Code
+library(randomForest)
+rf.beans <- randomForest(Class ~ Area + Eccentricity + Extent, data=trn.dat, mtry=4) 
+```
+
+```{r, include=FALSE}
+# Random Forest Accuracy
+rf.pred <- predict(rf.beans, tst.dat)
+mean(rf.pred == tst.dat$Class)
+```
+
+### GAM Model
+
+```{r, warning=FALSE}
+# Library for vector generalized additive models
+# https://cran.r-project.org/web/packages/VGAM/index.html
+# https://rpubs.com/pranaugi011089/98317
+# fits a cubic spline to log of area
+library(VGAM)
+library(splines)
+fit.gam <- vglm(Class ~ Area + Eccentricity + Extent, family=multinomial, data=trn.dat)
+fit.gam.spline <- vglm(Class ~ bs(log(Area)) + Eccentricity + Extent, family=multinomial, trn.dat)
+```
+
+
+```{r}
+# Anova test to check if vglm with feature engineering (cubic spline of log area)
+anova(fit.gam, fit.gam.spline, type='I')
+```
+
+```{r}
+# predict using test data on gam model, then store predicted classes
+predicted_probs.gam <- predict(fit.gam.spline, tst.dat, type='response')
+predicted_classes.gam <- as.factor(apply(predicted_probs.gam,1,function(x) names(which(max(x)==x)[1])))
+```
+
+```{r}
+mean(predicted_classes.gam ==tst.dat$Class)
+```
+
+## Figure 7
+## K-Nearest Neighbors Confusion Matrix
+```{r, include=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
+# Create confustion matrix for KNN
+# https://rdrr.io/cran/cvms/man/plot_confusion_matrix.html
+
+plot_confusion_matrix(as.data.frame(table(knn.pred, tst.dat$Class)), target_col='Var2', prediction_col='knn.pred', counts_col='Freq',add_row_percentages=FALSE, add_col_percentages=FALSE, counts_on_top=TRUE, rotate_y_text=FALSE, add_normalized = FALSE)
+
+```
+
+## Figure 8
+## LDA Confusion Matrix
+```{r, include=TRUE, echo=FALSE}
+# Make predictions from LDA model on test data
+lda.class <- predict(lda.fit,tst.dat)
+# Create confustion matrix for LDA
+
+# https://rdrr.io/cran/cvms/man/plot_confusion_matrix.html
+plot_confusion_matrix(as.data.frame(table(lda.class$class, tst.dat$Class)), target_col='Var2', prediction_col='Var1', counts_col='Freq',add_row_percentages=FALSE, add_col_percentages=FALSE, counts_on_top=TRUE, rotate_y_text=FALSE, add_normalized = FALSE)
+```
+
+## Figure 9
+## QDA Confusion Matrix
+```{r, include=TRUE, echo=FALSE}
+# Make predictions from QDA model on test data
+qda.class <- predict(qda.fit,tst.dat)
+# Create confustion matrix for QDA
+# https://rdrr.io/cran/cvms/man/plot_confusion_matrix.html
+plot_confusion_matrix(as.data.frame(table(qda.class$class, tst.dat$Class)), target_col='Var2', prediction_col='Var1', counts_col='Freq',add_row_percentages=FALSE, add_col_percentages=FALSE, counts_on_top=TRUE, rotate_y_text=FALSE, add_normalized = FALSE)
+```
+
+
+## Random Forest Confusion Matrix
+```{r, include=TRUE, echo=FALSE, message=FALSE}
+
+# Get prediction on test data using Random Forest model
+rf.class <- predict(rf.beans ,tst.dat)
+
+# Create confustion matrix for Random Forest
+# https://rdrr.io/cran/cvms/man/plot_confusion_matrix.html
+plot_confusion_matrix(as.data.frame(table(rf.class, tst.dat$Class)), target_col='Var2', prediction_col='rf.class', counts_col='Freq',add_row_percentages=FALSE, add_col_percentages=FALSE, counts_on_top=TRUE, rotate_y_text=FALSE, add_normalized = FALSE)
+```
+
+
+## GAM Confusion Matrix
+```{r, include=TRUE, echo=FALSE, message=FALSE}
+
+# Create confustion matrix for Random Forest
+# https://rdrr.io/cran/cvms/man/plot_confusion_matrix.html
+plot_confusion_matrix(as.data.frame(table(predicted_classes.gam, tst.dat$Class)), target_col='Var2', prediction_col='predicted_classes.gam', counts_col='Freq',add_row_percentages=FALSE, add_col_percentages=FALSE, counts_on_top=TRUE, rotate_y_text=FALSE, add_normalized = FALSE)
+```
+
+```{r, include=TRUE, echo=FALSE, message=FALSE}
+# https://www.rdocumentation.org/packages/caret/versions/3.45/topics/confusionMatrix
+# Calculates a cross-tabulation of observed and predicted classes with associated statistics
+# Using constructed models, create a table giving accuracy, recall etc. for each model
+knn_performance_means <- colMeans(as.data.frame(confusionMatrix(knn.pred, tst.dat$Class)$byClass))
+lda_performance_means <- colMeans(as.data.frame(confusionMatrix(lda.class$class, tst.dat$Class)$byClass))
+qda_performance_means <- colMeans(as.data.frame(confusionMatrix(qda.class$class, tst.dat$Class)$byClass))
+rf_performance_means <- colMeans(as.data.frame(confusionMatrix(rf.class, tst.dat$Class)$byClass))
+gam_performance_means <- colMeans(as.data.frame(confusionMatrix(predicted_classes.gam, tst.dat$Class)$byClass))
+performance_df <- as.data.frame(cbind(rbind(knn_performance_means, lda_performance_means, qda_performance_means, rf_performance_means, gam_performance_means), Accuracy=c(mean(knn.pred == tst.dat$Class), mean(lda.class$class == tst.dat$Class), mean(qda.class$class == tst.dat$Class), mean(rf.class == tst.dat$Class), mean(predicted_classes.gam == tst.dat$Class))))
+performance_df <- performance_df[,c('Accuracy', 'Precision', 'Recall')]
+names(performance_df) <- c('Accuracy (%)', 'Precision (%)', 'Recall (%)')
+performance_df <- as.data.frame(round(t(performance_df)*100,2))
+names(performance_df) <- c('KNN', 'LDA', 'QDA', 'Random Forest', 'GAM')
+performance_df %>%
+  kbl(caption = "Performance Measures by Model Type") %>%
+  kable_classic(full_width = F, html_font = "Cambria") %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+
+
+
+```{r}
+#model comparison by accuracy
+knn.accuracy <- mean(knn.pred == tst.dat$Class)
+lda.accuracy<- mean(lda.class$class == tst.dat$Class)
+qda.accuracy <- mean(qda.class$class == tst.dat$Class) 
+rf.accuracy <- mean(rf.class == tst.dat$Class) 
+gam.accuracy <- mean(predicted_classes.gam == tst.dat$Class)
+
+acc.data <- data.frame(cbind(Model=c("LDA", "QDA","KNN", "RF", "GAM"), 
+                             rbind(table(lda.class$class), table(qda.class$class), 
+                                   table(knn.pred), table(rf.class),
+                                   table(predicted_classes.gam)), 
+                             Accuracy=round(rbind(lda.accuracy, qda.accuracy,knn.accuracy,
+                                                  rf.accuracy,gam.accuracy),5)), row.names = NULL )
+model.plot <- ggplot(acc.data, aes(x=Model, 
+                                   y= (acc.data$V8))) + 
+  geom_col(width = .60, aes(fill=Model), show.legend = F) + ggeasy::easy_center_title()+
+  labs(y = "Accuracy")
+
+model.plot
+```
+
+
+
+```{r}
+# GAM Model Evaluation
+pred.label.dat <- as.data.frame(cbind("class"=predicted_classes.gam,
+                                      "Eccentricity"=tst.dat$Eccentricity,
+                                      "Log_Area"=log(tst.dat$Area)))%>%
+  mutate(class=as.factor(ifelse(class=="1", "BOMBAY", ifelse(class=="2","CALI", ifelse(class=="3", "DERMASON", ifelse(class=="4", "HOROZ", ifelse(class=="5","SEKER", "SIRA" )))))))
+pred.label.dat
+
+# considered log(Area) and Eccentricity
+# GAM Model evaluation with true data
+grid.arrange(ggplot(tst.dat)+geom_point(aes(x=log(Area), y= Eccentricity,col=Class), size=.5)+ labs(title = "True Labeled")+xlab('Log_Area')+
+  theme(legend.position="None") + ggeasy::easy_center_title(),
+ggplot(pred.label.dat)+geom_point(aes(x= Log_Area, y=Eccentricity,col=class), size=.5)+ labs(title = "Predicted with GAM Model") + theme(legend.position="None") + ggeasy::easy_center_title(), ncol=2)
+```
+```{r}
+# Get plot legend only
+plot_legend <- g_legend(ggplot(tst.dat)+geom_point(aes(x=log(Area), y= Eccentricity,col=Class), size=.5))
+plot(plot_legend$grobs[[1]])
+```
+
+
+
+```{r, warning=FALSE}
+# Get predicted classes of cultivations for GAM model
+predicted_probs.gam.A <- predict(fit.gam.spline, cultivation_A_df, type='response')
+predicted_probs.gam.B <- predict(fit.gam.spline, cultivation_B_df, type='response')
+predicted_probs.gam.C <- predict(fit.gam.spline, cultivation_C_df, type='response')
+
+predicted_classes.gam.A <- as.factor(apply(predicted_probs.gam.A,1,function(x) names(which(max(x)==x)[1])))
+predicted_classes.gam.B <- as.factor(apply(predicted_probs.gam.B,1,function(x) names(which(max(x)==x)[1])))
+predicted_classes.gam.C <- as.factor(apply(predicted_probs.gam.C,1,function(x) names(which(max(x)==x)[1])))
+```
+
+```{r}
+# combine cultivation predictions into one dataframe
+model.cultivation.A.df = as.data.frame(predicted_classes.gam.A)
+model.cultivation.B.df = as.data.frame(predicted_classes.gam.B)
+model.cultivation.C.df = as.data.frame(predicted_classes.gam.C)
+names(model.cultivation.A.df) = c('Bean Type')
+names(model.cultivation.B.df) = c('Bean Type')
+names(model.cultivation.C.df) = c('Bean Type')
+model.cultivation.A.df['Cultivation'] = 'A'
+model.cultivation.B.df['Cultivation'] = 'B'
+model.cultivation.C.df['Cultivation'] = 'C'
+model.cultivation = rbind(model.cultivation.A.df, model.cultivation.B.df, model.cultivation.C.df)
+```
+
+
+```{r}
+# https://r-graph-gallery.com/48-grouped-barplot-with-ggplot2.html
+model.cultivation.summary <- model.cultivation %>% count(model.cultivation$'Bean Type', model.cultivation$Cultivation)
+names(model.cultivation.summary) <- c('Bean Type', 'Cultivation', 'Count')
+ggplot(model.cultivation.summary, aes(x=`Bean Type`, y=Count, fill=Cultivation)) +
+geom_bar(position="dodge", stat="identity") + ggtitle('Predicted Bean Counts by Cultivation - GAM') +
+  ylab("Count") + xlab("Bean Type") +
+  geom_text(aes(label=Count), vjust=-1, position=position_dodge(1), stat='identity')+ylim(0,850)
+```
+
+```{r}
+# Calculate Values if total of each bean type by cultivation
+
+# Add weight in grams and Dollars per pound of actual seeds
+model.cultivation.summary.merge <- merge(model.cultivation.summary, ReferenceData, by.x="Bean Type", by.y="Class", all.x=TRUE)
+model.cultivation.summary.merge$Value = with(model.cultivation.summary.merge, Count * GramsPerSeed * DollarPerPound/grams_per_pound)
+model.cultivation.summary.merge$Value = round(model.cultivation.summary.merge$Value,2)
+```
+
+```{r}
+# https://r-graph-gallery.com/48-grouped-barplot-with-ggplot2.html
+ggplot(model.cultivation.summary.merge, aes(x=`Bean Type`, y=Value, fill=Cultivation)) +
+geom_bar(position="dodge", stat="identity") + ggtitle('Predicted Bean Value by Cultivation - GAM') +
+  ylab("Value (USD)") + xlab("Bean Type") +
+  geom_text(aes(label=Value), vjust=-1, position=position_dodge(1), stat='identity')+ylim(0,3.1)
+```
+
+### Calculate Dataframes with prices for cultivations A, B an C
+```{r, PriceA, echo=T}
+CreatePriceDF <- function(model.cultivation.class) {
+  # Table of Predicted Number of Seeds for each Class
+  Price.Cultivation <- as.data.frame(model.cultivation.class)
+  names(Price.Cultivation) = c('predict.class')
+  # Calculate Number of Grams
+  Price.Cultivation$Grams <- ifelse(
+    Price.Cultivation$predict.class == "BOMBAY", 1.92,
+    ifelse(Price.Cultivation$predict.class == "CALI", 0.61,
+    ifelse(Price.Cultivation$predict.class == "DERMASON", 0.28,
+    ifelse(Price.Cultivation$predict.class == "HOROZ", 0.52,
+    ifelse(Price.Cultivation$predict.class == "SEKER", 0.49,
+    ifelse(Price.Cultivation$predict.class == "SIRA", 0.38, 0))))))
+  # Convert to Pounds
+  Price.Cultivation$Pounds <- Price.Cultivation$Grams / 453.592
+  # Calculate Price
+  Price.Cultivation$Price <- ifelse(
+    Price.Cultivation$predict.class == "BOMBAY", Price.Cultivation$Pounds*5.56, 
+    ifelse(Price.Cultivation$predict.class == "CALI", Price.Cultivation$Pounds*6.02,
+    ifelse(Price.Cultivation$predict.class == "DERMASON", Price.Cultivation$Pounds*1.98,
+    ifelse(Price.Cultivation$predict.class == "HOROZ", Price.Cultivation$Pounds*2.43,
+    ifelse(Price.Cultivation$predict.class == "SEKER", Price.Cultivation$Pounds*2.72,
+    ifelse(Price.Cultivation$predict.class == "SIRA", Price.Cultivation$Pounds*5.40, 0))))))
+  return(Price.Cultivation)
+}
+```
+
+
+# Store Dataframes of prices for cultivations A, B, C
+```{r}
+Price.A.Cultivation <- CreatePriceDF(model.cultivation.A.df$'Bean Type')
+Price.B.Cultivation <- CreatePriceDF(model.cultivation.B.df$'Bean Type')
+Price.C.Cultivation <- CreatePriceDF(model.cultivation.C.df$'Bean Type')
+```
+
+
+### Measure Uncertainty of price of a pound for cultivations A, B and C
+```{r}
+CreateBootStats <- function(Price.Cultivation) {
+  boot.n <- 1000
+  price.sum.boot <- rep(NA, boot.n)
+  for(i in 1:boot.n) {
+    randsamp <- Price.Cultivation$Price[sample(c(1:nrow(Price.Cultivation)), nrow(Price.Cultivation), replace=T)]
+    rand.sum <- sum(randsamp)
+    price.sum.boot[i] <- rand.sum
+  }
+    
+  # Calculate Percentiles for 95% Confidence Interval
+  Price_estimates <- data.frame(price.sum.boot)
+  colnames(Price_estimates) <- "Estimate"
+  
+  # Store statistics
+  CI <- quantile(price.sum.boot, probs = c(0.025, 0.975))
+  lower.ci = round(CI[[1]],4)
+  upper.ci = round(CI[[2]],4)
+  mean.cultivation <- round(mean(price.sum.boot),4)
+  sd.cultivation <- round(sd(price.sum.boot),4)
+  return(c(Price_estimates, lower.ci, upper.ci, mean.cultivation, sd.cultivation))
+}
+```
+
+### Store uncertainty lists of price of a pound for cultivations A, B, C
+```{r}
+stats.list.A <- CreateBootStats(Price.A.Cultivation)
+stats.list.B <- CreateBootStats(Price.B.Cultivation)
+stats.list.C <- CreateBootStats(Price.C.Cultivation)
+```
+
+### Create Plot of bootstrap 95% confidence interval for a cultivation
+```{r}
+CreateCIPlot <- function(stats.list, Cultivation_Letter) {
+    # GGPLOT of Bootstrap Estimates for Total Price for Sample
+  #https://www.statology.org/ggplot2-vertical-line/#:~:text=You%20can%20quickly%20add%20vertical%20lines%20to%20ggplot2,This%20can%20be%20one%20value%20or%20multiple%20values.
+  
+  # https://www.r-graph-gallery.com/275-add-text-labels-with-ggplot2
+  
+  # https://datavizpyr.com/dollar-format-for-axis-labels-with-ggplot2/
+  
+  Price_estimates <- as.data.frame(stats.list[1])
+  lower.ci <- stats.list[[2]]
+  upper.ci <- stats.list[[3]]
+
+  ci.plot <- ggplot(Price_estimates, aes(x = Estimate)) + 
+    geom_histogram(color="black", fill="white") +
+    ggtitle(paste("Histogram for Bootstrap Estimate for\n Sample", Cultivation_Letter ,"Price (1,000 Samples)"))+
+    xlab(paste("Estimated Total Price for Sample", Cultivation_Letter, " (USD)")) +
+    ylab("Bootstrap Counts") +
+    geom_vline(xintercept=c(lower.ci, upper.ci), linetype='dashed', color=c('blue', 'red'), size=1) +
+  geom_label(label=paste("95% C.I. Lower Bound\n$", lower.ci), x=lower.ci,y=85, label.padding = unit(0.15, "lines"), label.size = 0.1, color = "black", fill="yellow") +
+    geom_label(label=paste("95% C.I. Upper Bound\n$", upper.ci), x=upper.ci,y=85, label.padding = unit(0.15, "lines"), label.size = 0.1, color = "black", fill="yellow") +
+    scale_x_continuous(labels=scales::dollar_format())
+  return(ci.plot)
+}
+```
+
+
+### Create Plot of bootstrap 95% confidence interval for cultivation A
+```{r}
+CreateCIPlot(stats.list.A, "A")
+```
+### Create Plot of bootstrap 95% confidence interval for cultivation B
+```{r}
+CreateCIPlot(stats.list.B, "B")
+```
+
+### Create Plot of bootstrap 95% confidence interval for cultivation C
+```{r}
+CreateCIPlot(stats.list.C, "C")
+```
+# Gather bootstrap stats calculated in above functions
+```{r}
+# extract mean, sd, lower ci, upper ci into new lists, then combine lists to dataframe
+final.stats.list.A <- c(stats.list.A[[4]], stats.list.A[[5]], stats.list.A[[2]], stats.list.A[[3]])
+final.stats.list.B <- c(stats.list.B[[4]], stats.list.B[[5]], stats.list.B[[2]], stats.list.B[[3]])
+final.stats.list.C <- c(stats.list.C[[4]], stats.list.C[[5]], stats.list.C[[2]], stats.list.C[[3]])
+results_df <- as.data.frame(rbind(final.stats.list.A, final.stats.list.B, final.stats.list.C))
+names(results_df) <- c('Mean', 'Standard Error', 'Lower Confidence Interval', 'Upper Confidence Interval')
+rownames(results_df) <- c('A', 'B', 'C')
+```
+
+```{r}
+# TODO: Flow into what's above
+# Create a nicely formatted chart giving the estimated one pound sample value and a measure of accuracy for each cultivation
+results_df %>%
+  kbl(caption = "Value (USD) of One Pound Bean Cultivation (Calculated from Bootstrap of 1,000 One Pound Bean Samples)") %>%
+  kable_classic(full_width = T, html_font = "Cambria") %>%
+  kable_styling(latex_options = "HOLD_position")
+```
